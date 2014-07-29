@@ -1,4 +1,6 @@
 (function() {
+  "use strict";
+
   var canvas = document.getElementById('myCanvas'),
       context = canvas.getContext('2d');
 
@@ -16,14 +18,17 @@
 
     this.map = new Map();
     this.player = new Player();
+    this.swarm = new Swarm();
+    this.swarmPos = 0;
+    this.swarmDir = -1;
 
     document.onkeydown = function(e) {
       e = e || window.event;
 
       if(e.keyCode == 37) {
-        self.player.move(-10, 0);
+        self.player.move(-5, 0);
       } else if(e.keyCode == 39) {
-        self.player.move(10, 0);
+        self.player.move(5, 0);
       }
     };
   }
@@ -33,12 +38,26 @@
 
     //clear canvas before redraw
     context.clearRect(0, 0, canvas.width, canvas.height);
-
+    //draw screen
     this.map.draw();
+    //draw player
     this.player.draw();
-    //this.context.font = '40pt Calibri';
-    //this.context.fillStyle = 'blue';
-    //this.context.fillText('Hello World!', 150, 100);
+    //draw aliens
+    this.swarm.draw();
+
+    //move the swarm
+    this.swarm.move(this.swarmDir*1, 0);
+    this.swarmPos += this.swarmDir*1;
+
+    if(this.swarmDir === -1 && this.swarmPos < -100) {
+      this.swarmDir = 1;
+      this.swarmPos = -100;
+    } 
+
+    if(this.swarmDir === 1 && this.swarmPos > 100) {
+      this.swarmDir = -1;
+      this.swarmPos = 100;
+    }
 
     //game loop
     setTimeout(function() { self.draw(); }, 10);
@@ -69,9 +88,43 @@
     Actor.prototype.draw.call(this, 'green');
   };
 
-  function Alien() {
-
+  Alien.prototype = Object.create(Actor.prototype);
+  Alien.prototype.constructor = Alien;
+  function Alien(x, y) {
+    Actor.call(this, x, y);
   }
+
+  Alien.prototype.draw = function() {
+    Actor.prototype.draw.call(this, 'red');
+  };
+
+  function Swarm() {
+    this.x = 175;
+    this.y = 40;
+    this.dist = 30;
+    this.aliens = [];
+
+    for(var rows = 0; rows < 5; rows++) {
+      for(var cols = 0; cols < 10; cols++) {
+        this.aliens.push(new Alien(
+          this.x + (this.dist*cols),
+          this.y + (this.dist*rows)
+        ));
+      }
+    }
+  }
+
+  Swarm.prototype.draw = function() {
+    for(var i = 0; i< this.aliens.length; i++) {
+      this.aliens[i].draw();
+    }
+  };
+
+  Swarm.prototype.move = function(x, y) {
+    for(var i = 0; i< this.aliens.length; i++) {
+      this.aliens[i].move(x, y);
+    }
+  };
 
   function Missle(direction) {
     this.direction = direction;
