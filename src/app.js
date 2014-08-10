@@ -34,7 +34,8 @@
   }
 
   Game.prototype.draw = function() {
-    var self = this;
+    var self = this,
+      missles = this.player.getMissles();
 
     //clear canvas before redraw
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -42,7 +43,10 @@
     this.map.draw();
     //draw player
     this.player.draw();
-    this.player.missle.draw();
+    //draw player missles
+    for(var i=0; i < missles.length; i++) {
+      missles[i].draw();
+    }
     //draw aliens
     this.swarm.draw();
 
@@ -73,36 +77,40 @@
   function Actor(x, y) {
     this.x = x;
     this.y = y;
-    this.missle = new Missle(this);
+    this.missles = [];
   }
 
-  Actor.prototype.move = function(x, y) {
-    this.missle.move(x, y);
-    Movable.prototype.move.call(this, x, y);
+  Actor.prototype.fire = function(missle) {
+    this.missles.push(missle);
+    missle.fire();
   };
 
-  Actor.prototype.fire = function() {
-      this.missle.fire();
+  Actor.prototype.getMissles = function() {
+    return this.missles;
   };
 
   Player.prototype = Object.create(Actor.prototype);
   Player.prototype.constructor = Player;
   function Player() {
     Actor.call(this, 320, 440);
-
-    this.missle.setDirection(Missle.DIRECTION_UP);
   }
 
   Player.prototype.draw = function() {
     Actor.prototype.draw.call(this, 'green');
   };
 
+  Player.prototype.fire = function() {
+    Actor.prototype.fire.call(this, new Missle(
+      this.x, 
+      this.y, 
+      Missle.DIRECTION_UP
+    ));
+  };
+
   Alien.prototype = Object.create(Actor.prototype);
   Alien.prototype.constructor = Alien;
   function Alien(x, y) {
     Actor.call(this, x, y);
-
-    this.missle.setDirection(Missle.DIRECTION_DOWN);
   }
 
   Alien.prototype.draw = function() {
@@ -154,11 +162,10 @@
 
   Missle.prototype = Object.create(Movable.prototype);
   Missle.prototype.constructor = Missle;
-  function Missle(actor) {
-    this.position = 0;
-    this.actor = actor;
+  function Missle(x, y, direction) {
+    this.direction = direction;
 
-    Movable.call(this, actor.x, actor.y);
+    Movable.call(this, x, y);
   }
 
   Missle.prototype.draw = function() {
@@ -171,10 +178,6 @@
     this.move(0, this.direction);
 
     setTimeout(function() { self.fire(); }, 10);
-  };
-
-  Missle.prototype.setDirection = function(direction) {
-    this.direction = direction;
   };
 
   Missle.DIRECTION_UP = -2;
